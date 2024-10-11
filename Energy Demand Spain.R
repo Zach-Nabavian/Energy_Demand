@@ -1,7 +1,9 @@
 library("tidyverse")
 library("ggplot2")
 library("scales")
-
+library("fable")
+library("tsibble")
+library("feasts")
 
 energy <- read_csv("Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
 
@@ -19,8 +21,23 @@ energy %>%
 
 # create individual columns for year, month, day, hour
 energy <- energy %>% 
-    mutate(year = year(time), month = month(time), day = day(time), hour = hour(time)) %>% 
+    mutate(year = year(time), month = month(time), day = day(time), hour = hour(time), weekday = weekdays.Date(time)) %>% 
     select_all()
+
+# Fill in missing values with lagged values from previous 24 hours 
+lag <- lag(energy$`total load actual`, 24)
+
+# Check for missing values of actual demand
+energy %>% 
+  filter(is.na(`total load actual`)) %>% 
+  select_all()
+
+energy <- energy %>% 
+  mutate(`total load actual` = if_else(is.na(`total load actual`), lag, `total load actual`)) %>% 
+  select_all()
+
+energy %>% 
+  select(time, weekday)
 
 # Use a graph to check for seasonality in hour of day
 energy %>% 
@@ -38,10 +55,14 @@ energy %>%
   scale_x_continuous(breaks = breaks_pretty()) +
   geom_boxplot(aes(group = month))
 
-# Check for missing values of actual demand
+energy$weekday <- factor(energy$weekday, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+# Use a graph the check for seasonality for the day of the week
 energy %>% 
-  filter(is.na(`total load forecast`)) %>% 
-  select_all()
+  group_by(weekday) %>% 
+  ggplot(aes(x = weekday, y = `total load actual`)) +
+  labs(title = "Daily Demand") +
+  geom_boxplot(aes(group = weekday))
 
 # Plot histogram of residuals of demand forecast and actual demand
 energy %>% 
@@ -56,27 +77,66 @@ resids = energy$`total load forecast` - energy$`total load actual`
 sample = sample(resids, size = 5000)
 shapiro.test(sample)
 
-# Fill in missing values with lagged values from previous 24 hours 
-lag <- lag(energy$`total load actual`, 24)
-
-energy <- energy %>% 
-    mutate(`total load actual` = if_else(is.na(`total load actual`), lag, `total load actual`)) %>% 
-    select_all()
-
 # Check for autocorrelation in total demand
 demand_lag = energy$`total load actual`
 acf(demand_lag)
 
-# Use STL decomposition to check the seasonal and trend components in demand
-demand <- ts(energy$`total load actual`, frequency = 24)
-stl <- stl(demand, "periodic")
-plot(stl)
+# Use the Kruskal-Wallis test to check for seasonality by hour, month, and weekday
+kruskal.test(`total load actual` ~ hour, data = energy)
+kruskal.test(`total load actual` ~ month, data = energy)
+kruskal.test(`total load actual` ~ weekday, data = energy)
 
-# Format the stl object as tibble to later use ggplot 2 to graph the seasonal and trend components
-dcmp <- as_tibble(stl$time.series)
-dcmp
+# Filter for just Jan 2015
+energy_jan_2015 <- energy %>% 
+    filter(year == 2015 & month == 1) %>% 
+    select(time, hour, weekday, `total load actual`)
 
-dcmp %>%
-  ggplot(aes(x = energy$time, y = seasonal)) +
-  labs(title = "Seasonal Component") +
-  geom_line(position = position_jitter(w = 100, h = 100))
+energy_jan_2015 <- as_tsibble(energy_jan_2015)
+
+# Filter for first half of February
+energy_feb_2015 <- energy %>% 
+      filter(year == 2015 & month == 2 & day <= 14) %>% 
+      select(time, `total load actual`)
+
+energy_feb_2015 <- as_tsibble(energy_feb_2015)
+
+energy_jan_2015 %>% 
+  autoplot(`total load actual`)
+
+# Model some simple forecasting methods
+demand_fit <- energy_jan_2015 %>% 
+    model(
+      #mean = MEAN(`total load actual`),
+      #naive = NAIVE(`total load actual`),
+      snaive_hour = SNAIVE(`total load actual` ~ lag(24)),
+      snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
+      #drift = RW(`total load actual` ~ drift())
+    )
+
+# forecast fort the next day
+simple_fc <- demand_fit %>% 
+    forecast(h = 336)
+
+simple_fc %>% 
+  autoplot(energy_jan_2015, level = NULL) +
+  autolayer(energy_feb_2015, color = 'grey') +
+  labs(y = 'demand', title = 'Simple Forecasts for Total Demand') +
+  guides(color = guide_legend(title = 'Forecast'))
+
+# Use the augment function to find the residuals for each of the forecasts
+resid <- augment(demand_fit)
+
+# Generate diagnostic plots for the mean forecast residuals
+energy_feb_2015 %>% 
+  model(mean = MEAN(`total load actual`)) %>% 
+  gg_tsresiduals()
+
+# Generate diagnostic plots for the naive seasonal forecast residuals, treating the hour of the day as the season
+energy_feb_2015 %>% 
+  model(snaive_hour = SNAIVE(`total load actual` ~ lag(24))) %>% 
+  gg_tsresiduals()
+
+# Generate diagnostic plots for the naive seasonal forecast residuals, treating the day of the week as the season
+energy_feb_2015 %>% 
+  model(snaive_weekday = SNAIVE(`total load actual` ~ lag(7))) %>% 
+  gg_tsresiduals()
