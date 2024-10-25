@@ -1,9 +1,11 @@
+update.packages(ask = FALSE)
 library("tidyverse")
 library("ggplot2")
 library("scales")
 library("fable")
 library("tsibble")
 library("feasts")
+library("gt")
 
 energy <- read_csv("Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
 
@@ -43,34 +45,40 @@ energy %>%
 energy %>% 
   group_by(hour) %>%
   ggplot(aes(x = hour, y = `total load actual`)) +
-  labs(title = "Hourly Demand") +
-  scale_x_continuous(breaks = breaks_pretty()) +
-  geom_boxplot(aes(group = hour))
+  geom_boxplot(aes(group = hour)) +
+  labs(title = "Spanish Energy Demand Shows a Large Hourly Effect", y = "Total Load Actual (GWh)", x = "Hour") +
+  scale_x_continuous(breaks = seq(0, 23, 1)) +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
+
 
 # Use a graph the check for seasonality in month of year
 energy %>% 
   group_by(month) %>% 
   ggplot(aes(x = month, y = `total load actual`)) +
-  labs(title = "Monthly Demand") +
-  scale_x_continuous(breaks = breaks_pretty()) +
-  geom_boxplot(aes(group = month))
+  geom_boxplot(aes(group = month)) +
+  labs(title = "Spanish Energy Demand Shows a Small Monthly Seasonal Effect", y = "Total Load Actual (GWh)", x = "Month") +
+  scale_x_continuous(breaks = seq(1, 12, 1)) +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
 
-energy$weekday <- factor(energy$weekday, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+energy$weekday <- factor(energy$weekday, levels = c(
+  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
 
 # Use a graph the check for seasonality for the day of the week
 energy %>% 
   group_by(weekday) %>% 
   ggplot(aes(x = weekday, y = `total load actual`)) +
-  labs(title = "Daily Demand") +
-  geom_boxplot(aes(group = weekday))
-
-# Plot histogram of residuals of demand forecast and actual demand
-energy %>% 
-  filter(is.na(`total load actual`) == FALSE) %>% 
-  mutate(resids = `total load forecast` - `total load actual`) %>% 
-  ggplot(mapping = aes(resids)) +
-  labs(title = "Total Load Forecast Residuals") +
-  geom_histogram(bins = 100)
+  geom_boxplot(aes(group = weekday)) + 
+  labs(title = "Spanish Energy Demand Shows Lower Demand on Weekends", y = "Total Load Actual (GWh)", x = "Weekday") +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
 
 # Perform the Shapiro-Wilk to test to see if the residuals are normally distributed
 resids = energy$`total load forecast` - energy$`total load actual`
@@ -106,11 +114,9 @@ energy_jan_2015 %>%
 # Model some simple forecasting methods
 demand_fit <- energy_jan_2015 %>% 
     model(
-      #mean = MEAN(`total load actual`),
-      #naive = NAIVE(`total load actual`),
+      mean = MEAN(`total load actual`),
       snaive_hour = SNAIVE(`total load actual` ~ lag(24)),
       snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
-      #drift = RW(`total load actual` ~ drift())
     )
 
 # forecast fort the next day
@@ -120,8 +126,12 @@ simple_fc <- demand_fit %>%
 simple_fc %>% 
   autoplot(energy_jan_2015, level = NULL) +
   autolayer(energy_feb_2015, color = 'grey') +
-  labs(y = 'demand', title = 'Simple Forecasts for Total Demand') +
-  guides(color = guide_legend(title = 'Forecast'))
+  labs(y = "Total Load Actual (GWh)", title = 'Simple Forecasts for Total Demand') +
+  guides(color = guide_legend(title = 'Forecast')) +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
 
 # Use the augment function to find the residuals for each of the forecasts
 resid <- augment(demand_fit)
@@ -140,3 +150,18 @@ energy_feb_2015 %>%
 energy_feb_2015 %>% 
   model(snaive_weekday = SNAIVE(`total load actual` ~ lag(7))) %>% 
   gg_tsresiduals()
+
+# Create a table showing point estimate accuracy measures for the simple forecasts
+point_estimates <- accuracy(simple_fc, energy_feb_2015) %>% 
+  arrange(RMSE) %>% 
+  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1)
+
+gt(point_estimates) %>% 
+  tab_header(title = "Forecast Accuracy Measures") %>% 
+  fmt_number(decimals = 2) %>% 
+  fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
+  tab_style(style = list(
+    cell_text(weight = "bold")
+    ), locations = cells_title())
+
+
