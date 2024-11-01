@@ -11,15 +11,24 @@ energy <- read_csv("Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv"
 
 # Graph total energy demand over time
 ggplot(data = energy, aes(x = time, y = `total load actual`)) +
-  labs(title = "Total Demand") +
-  geom_line()
+  labs(title = "Energy Demand Over Whole Dataset") +
+  geom_line() +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
+
 
 # Focus on a single day in 2015
 energy %>% 
   filter(year(time) == 2015, month(time) == 1, day(time) == 1) %>% 
   ggplot(aes(x = time, y = `total load actual`)) + 
-  labs(title = "Total Demand") +
-  geom_line()
+  labs(title = "Actual Demand in January 2015") +
+  geom_line() +
+  theme_bw() +
+  theme(axis.title = element_text(size = 15, face = "bold")) +
+  theme(text = element_text(size = 14)) +
+  theme(title = element_text(size = 15, face = "bold"))
 
 # create individual columns for year, month, day, hour
 energy <- energy %>% 
@@ -108,25 +117,28 @@ energy_feb_2015 <- energy %>%
 
 energy_feb_2015 <- as_tsibble(energy_feb_2015)
 
-energy_jan_2015 %>% 
+energy_feb_2015 %>% 
   autoplot(`total load actual`)
 
-# Model some simple forecasting methods
+# Model some simple forecasting methods and regression model
 demand_fit <- energy_jan_2015 %>% 
     model(
       mean = MEAN(`total load actual`),
       snaive_hour = SNAIVE(`total load actual` ~ lag(24)),
       snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
+      etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
+      etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
     )
 
 # forecast fort the next day
 simple_fc <- demand_fit %>% 
     forecast(h = 336)
 
-simple_fc %>% 
+simple_fc %>%
+  filter(.model =='etsa' | .model == 'etsm') %>% 
   autoplot(energy_jan_2015, level = NULL) +
   autolayer(energy_feb_2015, color = 'grey') +
-  labs(y = "Total Load Actual (GWh)", title = 'Simple Forecasts for Total Demand') +
+  labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand Using Exponential Smoothing') +
   guides(color = guide_legend(title = 'Forecast')) +
   theme_bw() +
   theme(axis.title = element_text(size = 15, face = "bold")) +
@@ -151,6 +163,18 @@ energy_feb_2015 %>%
   model(snaive_weekday = SNAIVE(`total load actual` ~ lag(7))) %>% 
   gg_tsresiduals()
 
+energy_feb_2015 %>% 
+  model(regression = TSLM(`total load actual` ~ season())) %>% 
+  gg_tsresiduals()
+  
+energy_feb_2015 %>% 
+  model(etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A"))) %>% 
+  gg_tsresiduals()
+
+energy_feb_2015 %>% 
+  model(etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M"))) %>% 
+  gg_tsresiduals()
+
 # Create a table showing point estimate accuracy measures for the simple forecasts
 point_estimates <- accuracy(simple_fc, energy_feb_2015) %>% 
   arrange(RMSE) %>% 
@@ -163,5 +187,3 @@ gt(point_estimates) %>%
   tab_style(style = list(
     cell_text(weight = "bold")
     ), locations = cells_title())
-
-
