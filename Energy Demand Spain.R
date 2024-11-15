@@ -6,6 +6,7 @@ library("fable")
 library("tsibble")
 library("feasts")
 library("gt")
+library('urca')
 
 energy <- read_csv("Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
 
@@ -120,6 +121,9 @@ energy_feb_2015 <- as_tsibble(energy_feb_2015)
 energy_feb_2015 %>% 
   autoplot(`total load actual`)
 
+energy_jan_2015 %>% 
+  gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
+
 # Model some simple forecasting methods and regression model
 demand_fit <- energy_jan_2015 %>% 
     model(
@@ -128,17 +132,23 @@ demand_fit <- energy_jan_2015 %>%
       snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
       etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
       etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
+      autoarima = ARIMA(`total load actual`),
+      arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))
     )
+
+energy_jan_2015 %>% 
+  model(autoarima = ARIMA(`total load actual`)) %>% 
+  report()
 
 # forecast fort the next day
 simple_fc <- demand_fit %>% 
     forecast(h = 336)
 
 simple_fc %>%
-  filter(.model =='etsa' | .model == 'etsm') %>% 
+  filter(.model == 'autoarima' | .model == 'arima200') %>% 
   autoplot(energy_jan_2015, level = NULL) +
   autolayer(energy_feb_2015, color = 'grey') +
-  labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand Using Exponential Smoothing') +
+  labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand') +
   guides(color = guide_legend(title = 'Forecast')) +
   theme_bw() +
   theme(axis.title = element_text(size = 15, face = "bold")) +
@@ -151,7 +161,7 @@ resid <- augment(demand_fit)
 # Generate diagnostic plots for the mean forecast residuals
 energy_feb_2015 %>% 
   model(mean = MEAN(`total load actual`)) %>% 
-  gg_tsresiduals()
+  gg_tsresiduals() 
 
 # Generate diagnostic plots for the naive seasonal forecast residuals, treating the hour of the day as the season
 energy_feb_2015 %>% 
@@ -175,10 +185,19 @@ energy_feb_2015 %>%
   model(etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M"))) %>% 
   gg_tsresiduals()
 
+energy_feb_2015 %>% 
+  model(arima = ARIMA(`total load actual`)) %>% 
+  gg_tsresiduals()
+
+energy_feb_2015 %>% 
+  model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))) %>% 
+  gg_tsresiduals() +
+  labs(title = 'Arima200 Residuals Summary')
+
 # Create a table showing point estimate accuracy measures for the simple forecasts
 point_estimates <- accuracy(simple_fc, energy_feb_2015) %>% 
   arrange(RMSE) %>% 
-  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1)
+  select(.model, ME, RMSE, MAE, MPE, MAPE)
 
 gt(point_estimates) %>% 
   tab_header(title = "Forecast Accuracy Measures") %>% 
@@ -186,4 +205,4 @@ gt(point_estimates) %>%
   fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
   tab_style(style = list(
     cell_text(weight = "bold")
-    ), locations = cells_title())
+    ), locations = cells_title()) 
