@@ -22,7 +22,7 @@ ggplot(data = energy, aes(x = time, y = `total load actual`)) +
 
 # Focus on a single day in 2015
 energy %>% 
-  filter(year(time) == 2015, month(time) == 1, day(time) == 1) %>% 
+  filter(year(time) == 2015 & month(time) == 1 & day(time) == 1) %>% 
   ggplot(aes(x = time, y = `total load actual`)) + 
   labs(title = "Actual Demand in January 2015") +
   geom_line() +
@@ -46,10 +46,12 @@ energy %>%
 
 energy <- energy %>% 
   mutate(`total load actual` = if_else(is.na(`total load actual`), lag, `total load actual`)) %>% 
+  mutate(weekend = if_else(weekday %in% c("Saturday", "Sunday"), "Yes", "No")) %>% 
   select_all()
 
 energy %>% 
-  select(time, weekday)
+  select(time, weekday, weekend) %>% 
+  print(n  = 1000)
 
 # Use a graph to check for seasonality in hour of day
 energy %>% 
@@ -107,7 +109,7 @@ kruskal.test(`total load actual` ~ weekday, data = energy)
 # Filter for just Jan 2015
 energy_jan_2015 <- energy %>% 
     filter(year == 2015 & month == 1) %>% 
-    select(time, hour, weekday, `total load actual`)
+    select(time, hour, weekday, weekend, `total load actual`)
 
 energy_jan_2015 <- as_tsibble(energy_jan_2015)
 
@@ -132,20 +134,16 @@ demand_fit <- energy_jan_2015 %>%
       snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
       etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
       etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
-      autoarima = ARIMA(`total load actual`),
-      arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))
+      arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
+      arima_harmonic = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = 169, K = 10)))
     )
-
-energy_jan_2015 %>% 
-  model(autoarima = ARIMA(`total load actual`)) %>% 
-  report()
 
 # forecast fort the next day
 simple_fc <- demand_fit %>% 
     forecast(h = 336)
 
 simple_fc %>%
-  filter(.model == 'autoarima' | .model == 'arima200') %>% 
+  filter(.model == 'arima_harmonic' | .model == 'arima200') %>% 
   autoplot(energy_jan_2015, level = NULL) +
   autolayer(energy_feb_2015, color = 'grey') +
   labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand') +
@@ -153,7 +151,8 @@ simple_fc %>%
   theme_bw() +
   theme(axis.title = element_text(size = 15, face = "bold")) +
   theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+  theme(title = element_text(size = 15, face = "bold")) +
+  scale_x_datetime(date_breaks = "3 days")
 
 # Use the augment function to find the residuals for each of the forecasts
 resid <- augment(demand_fit)
@@ -186,13 +185,10 @@ energy_feb_2015 %>%
   gg_tsresiduals()
 
 energy_feb_2015 %>% 
-  model(arima = ARIMA(`total load actual`)) %>% 
-  gg_tsresiduals()
-
-energy_feb_2015 %>% 
-  model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))) %>% 
+  model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0))) %>% 
   gg_tsresiduals() +
   labs(title = 'Arima200 Residuals Summary')
+
 
 # Create a table showing point estimate accuracy measures for the simple forecasts
 point_estimates <- accuracy(simple_fc, energy_feb_2015) %>% 
