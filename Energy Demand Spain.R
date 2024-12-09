@@ -7,8 +7,9 @@ library("tsibble")
 library("feasts")
 library("gt")
 library('urca')
+library("tseries")
 
-energy <- read_csv("Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
+energy <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
 
 # Graph total energy demand over time
 ggplot(data = energy, aes(x = time, y = `total load actual`)) +
@@ -18,7 +19,6 @@ ggplot(data = energy, aes(x = time, y = `total load actual`)) +
   theme(axis.title = element_text(size = 15, face = "bold")) +
   theme(text = element_text(size = 14)) +
   theme(title = element_text(size = 15, face = "bold"))
-
 
 # Focus on a single day in 2015
 energy %>% 
@@ -135,15 +135,15 @@ demand_fit <- energy_jan_2015 %>%
       etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
       etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
       arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
-      arima_harmonic = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = 169, K = 10)))
+      arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = "week", K = 5)))
     )
 
-# forecast fort the next day
+# forecast for the next day
 simple_fc <- demand_fit %>% 
     forecast(h = 336)
 
 simple_fc %>%
-  filter(.model == 'arima_harmonic' | .model == 'arima200') %>% 
+  filter(.model == 'etsm' | .model == 'etsa') %>% 
   autoplot(energy_jan_2015, level = NULL) +
   autolayer(energy_feb_2015, color = 'grey') +
   labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand') +
@@ -153,9 +153,6 @@ simple_fc %>%
   theme(text = element_text(size = 14)) +
   theme(title = element_text(size = 15, face = "bold")) +
   scale_x_datetime(date_breaks = "3 days")
-
-# Use the augment function to find the residuals for each of the forecasts
-resid <- augment(demand_fit)
 
 # Generate diagnostic plots for the mean forecast residuals
 energy_feb_2015 %>% 
@@ -196,9 +193,64 @@ point_estimates <- accuracy(simple_fc, energy_feb_2015) %>%
   select(.model, ME, RMSE, MAE, MPE, MAPE)
 
 gt(point_estimates) %>% 
-  tab_header(title = "Forecast Accuracy Measures") %>% 
+  tab_header(title = "Short Term Forecast Accuracy Measures") %>% 
   fmt_number(decimals = 2) %>% 
   fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
   tab_style(style = list(
     cell_text(weight = "bold")
     ), locations = cells_title()) 
+
+# Develop forecast for longer time frame
+
+# Filter for first three years of dataset
+
+energy_first_three_years <- energy %>% 
+  filter(year <= 2017) %>% 
+  select(time, hour, weekday, weekend, `total load actual`)
+
+energy_first_three_years <- as_tsibble(energy_first_three_years)
+
+energy_last_year <- energy %>% 
+  filter(year == 2018) %>% 
+  select(time, `total load actual`)
+
+energy_last_year <- as_tsibble(energy_last_year)
+  
+
+energy_first_three_years %>% 
+  gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
+
+# Model some simple forecasting methods and regression model
+demand_fit_long_term <- energy_first_three_years %>% 
+  model(
+    mean = MEAN(`total load actual`),
+    snaive_hour = SNAIVE(`total load actual` ~ lag(24)),
+    snaive_weekday = SNAIVE(`total load actual` ~ lag (7)),
+    etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
+    etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
+    arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
+    arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + fourier(period = "week", K = 5)),
+    arima_weekly_and_monthly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + fourier(period = "week", K = 5) +
+                                       fourier(period = "month", K = 3)))
+
+# forecast the next year
+simple_fc_long_term <- demand_fit_long_term %>% 
+  forecast(h = 8759)
+
+point_estimates <- accuracy(simple_fc_long_term, energy_last_year) %>% 
+  arrange(RMSE) %>% 
+  select(.model, ME, RMSE, MAE, MPE, MAPE)
+
+gt(point_estimates) %>% 
+  tab_header(title = "Long Term Forecast Accuracy Measures") %>% 
+  fmt_number(decimals = 2) %>% 
+  fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
+  tab_style(style = list(
+    cell_text(weight = "bold")
+  ), locations = cells_title())
+
+#Check residual diagnostics for the harmonic regression models
+demand_fit_long_term %>% 
+  select(arima200) %>% 
+  gg_tsresiduals() +
+  labs(title = "Hormonic Regression Model Residuals Summary")
