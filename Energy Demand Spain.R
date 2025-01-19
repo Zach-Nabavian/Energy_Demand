@@ -8,8 +8,18 @@ library("feasts")
 library("gt")
 library('urca')
 library("tseries")
+library("lubridate")
 
 energy <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
+weather <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/weather_features.csv")
+
+# Get an average temperature for each timestamp
+weather_grouped <- weather %>% 
+  group_by(dt_iso) %>% 
+  summarize(mean_temp = mean(temp))
+  
+# Join together the energy dataset and the mean temperature dataset
+energy <- inner_join(energy, weather_grouped, by = c("time" = "dt_iso"))
 
 # Graph total energy demand over time
 ggplot(data = energy, aes(x = time, y = `total load actual`)) +
@@ -35,6 +45,8 @@ energy %>%
 energy <- energy %>% 
     mutate(year = year(time), month = month(time), day = day(time), hour = hour(time), weekday = weekdays.Date(time)) %>% 
     select_all()
+
+
 
 # Fill in missing values with lagged values from previous 24 hours 
 lag <- lag(energy$`total load actual`, 24)
@@ -182,10 +194,13 @@ energy_feb_2015 %>%
   gg_tsresiduals()
 
 energy_feb_2015 %>% 
-  model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0))) %>% 
+  model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))) %>% 
   gg_tsresiduals() +
   labs(title = 'Arima200 Residuals Summary')
 
+demand_fit %>% 
+  augment() %>% 
+  features(.innov, box_pierce, lag = 24)
 
 # Create a table showing point estimate accuracy measures for the simple forecasts
 point_estimates <- accuracy(simple_fc, energy_feb_2015) %>% 
@@ -206,17 +221,21 @@ gt(point_estimates) %>%
 
 energy_first_three_years <- energy %>% 
   filter(year <= 2017) %>% 
-  select(time, hour, weekday, weekend, `total load actual`)
+  mutate_at(c("hour", "month"), as.factor) %>% 
+  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp) 
 
 energy_first_three_years <- as_tsibble(energy_first_three_years)
 
 energy_last_year <- energy %>% 
   filter(year == 2018) %>% 
-  select(time, `total load actual`)
+  mutate(temp_poly = poly(mean_temp, 3),
+         hour = factor(hour, levels = levels(energy_first_three_years$hour)),
+         weekday = factor(weekday, levels = levels(energy_first_three_years$weekday)),
+         month = factor(month, levels = levels(energy_first_three_years$month))) %>% 
+  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp, temp_poly)
 
 energy_last_year <- as_tsibble(energy_last_year)
   
-
 energy_first_three_years %>% 
   gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
 
@@ -230,12 +249,16 @@ demand_fit_long_term <- energy_first_three_years %>%
     etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
     arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
     arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + fourier(period = "week", K = 5)),
-    arima_weekly_and_monthly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + fourier(period = "week", K = 5) +
-                                       fourier(period = "month", K = 3)))
+    regression = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
+                        poly(mean_temp,3):month + poly(mean_temp,3):hour ))
 
 # forecast the next year
 simple_fc_long_term <- demand_fit_long_term %>% 
-  forecast(h = 8759)
+  forecast(new_data = energy_last_year)
+
+demand_fit_long_term %>% 
+  augment() %>% 
+  features(.innov, box_pierce, lag = 36)
 
 point_estimates <- accuracy(simple_fc_long_term, energy_last_year) %>% 
   arrange(RMSE) %>% 
@@ -249,8 +272,9 @@ gt(point_estimates) %>%
     cell_text(weight = "bold")
   ), locations = cells_title())
 
-#Check residual diagnostics for the harmonic regression models
+# Check residual diagnostics for the harmonic regression models
 demand_fit_long_term %>% 
-  select(arima200) %>% 
+  select(regression) %>% 
   gg_tsresiduals() +
-  labs(title = "Hormonic Regression Model Residuals Summary")
+  labs(title = "Regression Model Residuals Summary")
+
