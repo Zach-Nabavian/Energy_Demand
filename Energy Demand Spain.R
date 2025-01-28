@@ -9,6 +9,9 @@ library("gt")
 library('urca')
 library("tseries")
 library("lubridate")
+library("forecast")
+library("data.table")
+
 
 energy <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
 weather <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/weather_features.csv")
@@ -20,6 +23,10 @@ weather_grouped <- weather %>%
   
 # Join together the energy dataset and the mean temperature dataset
 energy <- inner_join(energy, weather_grouped, by = c("time" = "dt_iso"))
+
+# Add a moving average column for temperature
+energy <- energy %>% 
+  mutate(moving_avg = frollmean(mean_temp, 24))
 
 # Graph total energy demand over time
 ggplot(data = energy, aes(x = time, y = `total load actual`)) +
@@ -45,8 +52,6 @@ energy %>%
 energy <- energy %>% 
     mutate(year = year(time), month = month(time), day = day(time), hour = hour(time), weekday = weekdays.Date(time)) %>% 
     select_all()
-
-
 
 # Fill in missing values with lagged values from previous 24 hours 
 lag <- lag(energy$`total load actual`, 24)
@@ -221,18 +226,19 @@ gt(point_estimates) %>%
 
 energy_first_three_years <- energy %>% 
   filter(year <= 2017) %>% 
-  mutate_at(c("hour", "month"), as.factor) %>% 
-  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp) 
+  mutate_at(c("hour", "month"), as.factor) %>%
+  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp, moving_avg) 
 
 energy_first_three_years <- as_tsibble(energy_first_three_years)
 
 energy_last_year <- energy %>% 
   filter(year == 2018) %>% 
   mutate(temp_poly = poly(mean_temp, 3),
+         moving_avg_poly = poly(moving_avg, 3),
          hour = factor(hour, levels = levels(energy_first_three_years$hour)),
          weekday = factor(weekday, levels = levels(energy_first_three_years$weekday)),
          month = factor(month, levels = levels(energy_first_three_years$month))) %>% 
-  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp, temp_poly)
+  select(time, hour, weekday, weekend, month, `total load actual`, mean_temp, temp_poly, moving_avg, moving_avg_poly)
 
 energy_last_year <- as_tsibble(energy_last_year)
   
@@ -240,7 +246,8 @@ energy_first_three_years %>%
   gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
 
 # Model some simple forecasting methods and regression model
-demand_fit_long_term <- energy_first_three_years %>% 
+demand_fit_long_term <- energy_first_three_years %>%
+  filter(is.na(moving_avg) == FALSE) %>%
   model(
     mean = MEAN(`total load actual`),
     snaive_hour = SNAIVE(`total load actual` ~ lag(24)),
@@ -248,9 +255,11 @@ demand_fit_long_term <- energy_first_three_years %>%
     etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
     etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
     arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
-    arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + fourier(period = "week", K = 5)),
     regression = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
-                        poly(mean_temp,3):month + poly(mean_temp,3):hour ))
+                        poly(mean_temp,3):month + poly(mean_temp,3):hour),
+    regression_recency = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
+                                poly(mean_temp,3):month + poly(mean_temp,3):hour + poly(moving_avg, 3))
+   ) 
 
 # forecast the next year
 simple_fc_long_term <- demand_fit_long_term %>% 
@@ -274,7 +283,6 @@ gt(point_estimates) %>%
 
 # Check residual diagnostics for the harmonic regression models
 demand_fit_long_term %>% 
-  select(regression) %>% 
+  select(regression_recency) %>% 
   gg_tsresiduals() +
   labs(title = "Regression Model Residuals Summary")
-
