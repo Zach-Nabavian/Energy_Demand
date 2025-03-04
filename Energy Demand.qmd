@@ -8,6 +8,7 @@ editor: visual
 execute: 
   allow: true
 bibliography: references.bib
+rsconnect::writeManifest()
 ---
 
 ```{r}
