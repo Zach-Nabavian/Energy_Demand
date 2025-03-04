@@ -1,4 +1,4 @@
-update.packages(ask = FALSE)
+#update.packages(ask = FALSE)
 library("tidyverse")
 library("ggplot2")
 library("scales")
@@ -13,8 +13,8 @@ library("forecast")
 library("data.table")
 
 
-energy <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/energy_dataset.csv")
-weather <- read_csv("/Users/Honors/Desktop/Portfolio Projects/Energy Demand/weather_features.csv")
+energy <- read_csv("energy_dataset.csv")
+weather <- read_csv("weather_features.csv")
 
 # Get an average temperature for each timestamp
 weather_grouped <- weather %>% 
@@ -29,24 +29,24 @@ energy <- energy %>%
   mutate(moving_avg = frollmean(mean_temp, 24))
 
 # Graph total energy demand over time
-ggplot(data = energy, aes(x = time, y = `total load actual`)) +
-  labs(title = "Energy Demand Over Whole Dataset") +
-  geom_line() +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+energy_all_time <- ggplot(data = energy, aes(x = time, y = `total load actual`)) +
+    labs(title = "Energy Demand Over Whole Dataset") +
+    geom_line() +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
 
 # Focus on a single day in 2015
-energy %>% 
-  filter(year(time) == 2015 & month(time) == 1 & day(time) == 1) %>% 
-  ggplot(aes(x = time, y = `total load actual`)) + 
-  labs(title = "Actual Demand in January 2015") +
-  geom_line() +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+energy_in_2015 <- energy %>% 
+    filter(year(time) == 2015 & month(time) == 1 & day(time) == 1) %>% 
+    ggplot(aes(x = time, y = `total load actual`)) + 
+    labs(title = "Actual Demand in January 2015") +
+    geom_line() +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
 
 # create individual columns for year, month, day, hour
 energy <- energy %>% 
@@ -71,52 +71,48 @@ energy %>%
   print(n  = 1000)
 
 # Use a graph to check for seasonality in hour of day
-energy %>% 
-  group_by(hour) %>%
-  ggplot(aes(x = hour, y = `total load actual`)) +
-  geom_boxplot(aes(group = hour)) +
-  labs(title = "Spanish Energy Demand Shows a Large Hourly Effect", y = "Total Load Actual (GWh)", x = "Hour") +
-  scale_x_continuous(breaks = seq(0, 23, 1)) +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+hour_box_plot <- energy %>% 
+    group_by(hour) %>%
+    ggplot(aes(x = hour, y = `total load actual`)) +
+    geom_boxplot(aes(group = hour)) +
+    labs(title = "Spanish Energy Demand Shows a Large Hourly Effect", y = "Total Load Actual (GWh)", x = "Hour") +
+    scale_x_continuous(breaks = seq(0, 23, 1)) +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
 
 
 # Use a graph the check for seasonality in month of year
-energy %>% 
-  group_by(month) %>% 
-  ggplot(aes(x = month, y = `total load actual`)) +
-  geom_boxplot(aes(group = month)) +
-  labs(title = "Spanish Energy Demand Shows a Small Monthly Seasonal Effect", y = "Total Load Actual (GWh)", x = "Month") +
-  scale_x_continuous(breaks = seq(1, 12, 1)) +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+month_box_plot <- energy %>% 
+    group_by(month) %>% 
+    ggplot(aes(x = month, y = `total load actual`)) +
+    geom_boxplot(aes(group = month)) +
+    labs(title = "Spanish Energy Demand Shows a Small Monthly Seasonal Effect", y = "Total Load Actual (GWh)", x = "Month") +
+    scale_x_continuous(breaks = seq(1, 12, 1)) +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
 
 energy$weekday <- factor(energy$weekday, levels = c(
   "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
 
 # Use a graph the check for seasonality for the day of the week
-energy %>% 
-  group_by(weekday) %>% 
-  ggplot(aes(x = weekday, y = `total load actual`)) +
-  geom_boxplot(aes(group = weekday)) + 
-  labs(title = "Spanish Energy Demand Shows Lower Demand on Weekends", y = "Total Load Actual (GWh)", x = "Weekday") +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold"))
+week_box_plot <- energy %>% 
+    group_by(weekday) %>% 
+    ggplot(aes(x = weekday, y = `total load actual`)) +
+    geom_boxplot(aes(group = weekday)) + 
+    labs(title = "Spanish Energy Demand Shows Lower Demand on Weekends", y = "Total Load Actual (GWh)", x = "Weekday") +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
 
 # Perform the Shapiro-Wilk to test to see if the residuals are normally distributed
 resids = energy$`total load forecast` - energy$`total load actual`
 sample = sample(resids, size = 5000)
 shapiro.test(sample)
-
-# Check for autocorrelation in total demand
-demand_lag = energy$`total load actual`
-acf(demand_lag)
 
 # Use the Kruskal-Wallis test to check for seasonality by hour, month, and weekday
 kruskal.test(`total load actual` ~ hour, data = energy)
@@ -137,11 +133,11 @@ energy_feb_2015 <- energy %>%
 
 energy_feb_2015 <- as_tsibble(energy_feb_2015)
 
-energy_feb_2015 %>% 
-  autoplot(`total load actual`)
+feb_2015_plot <- energy_feb_2015 %>% 
+    autoplot(`total load actual`)
 
-energy_jan_2015 %>% 
-  gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
+jan_2015_features <- energy_jan_2015 %>% 
+    gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
 
 # Model some simple forecasting methods and regression model
 demand_fit <- energy_jan_2015 %>% 
@@ -152,53 +148,49 @@ demand_fit <- energy_jan_2015 %>%
       etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
       etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
       arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
-      arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = "week", K = 5)))
+      #arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = "week", K = 5)))
     )
 
 # forecast for the next day
 simple_fc <- demand_fit %>% 
     forecast(h = 336)
 
-simple_fc %>%
-  filter(.model == 'etsm' | .model == 'etsa') %>% 
-  autoplot(energy_jan_2015, level = NULL) +
-  autolayer(energy_feb_2015, color = 'grey') +
-  labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand') +
-  guides(color = guide_legend(title = 'Forecast')) +
-  theme_bw() +
-  theme(axis.title = element_text(size = 15, face = "bold")) +
-  theme(text = element_text(size = 14)) +
-  theme(title = element_text(size = 15, face = "bold")) +
-  scale_x_datetime(date_breaks = "3 days")
+short_term_forecast <- simple_fc %>%
+    filter(.model == 'etsm' | .model == 'etsa') %>% 
+    autoplot(energy_jan_2015, level = NULL) +
+    autolayer(energy_feb_2015, color = 'grey') +
+    labs(y = "Total Load Actual (GWh)", title = 'Forecasting Hourly Demand') +
+    guides(color = guide_legend(title = 'Forecast')) +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold")) +
+    scale_x_datetime(date_breaks = "3 days")
 
 # Generate diagnostic plots for the mean forecast residuals
-energy_feb_2015 %>% 
-  model(mean = MEAN(`total load actual`)) %>% 
-  gg_tsresiduals() 
+short_term_mean_residuals <- energy_feb_2015 %>% 
+    model(mean = MEAN(`total load actual`)) %>% 
+    gg_tsresiduals()
 
 # Generate diagnostic plots for the naive seasonal forecast residuals, treating the hour of the day as the season
-energy_feb_2015 %>% 
-  model(snaive_hour = SNAIVE(`total load actual` ~ lag(24))) %>% 
-  gg_tsresiduals()
+naive_hour_residuals <- energy_feb_2015 %>% 
+    model(snaive_hour = SNAIVE(`total load actual` ~ lag(24))) %>% 
+    gg_tsresiduals()
 
 # Generate diagnostic plots for the naive seasonal forecast residuals, treating the day of the week as the season
-energy_feb_2015 %>% 
-  model(snaive_weekday = SNAIVE(`total load actual` ~ lag(7))) %>% 
-  gg_tsresiduals()
-
-energy_feb_2015 %>% 
-  model(regression = TSLM(`total load actual` ~ season())) %>% 
-  gg_tsresiduals()
+naive_week_residuals <- energy_feb_2015 %>% 
+    model(snaive_weekday = SNAIVE(`total load actual` ~ lag(7))) %>% 
+    gg_tsresiduals()
   
-energy_feb_2015 %>% 
-  model(etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A"))) %>% 
-  gg_tsresiduals()
+etsa_residuals <- energy_feb_2015 %>% 
+    model(etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A"))) %>% 
+    gg_tsresiduals()
 
-energy_feb_2015 %>% 
-  model(etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M"))) %>% 
-  gg_tsresiduals()
+etsm_residuals <- energy_feb_2015 %>% 
+    model(etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M"))) %>% 
+    gg_tsresiduals()
 
-energy_feb_2015 %>% 
+arima_residuals <- energy_feb_2015 %>% 
   model(arima = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(1, 1, 0))) %>% 
   gg_tsresiduals() +
   labs(title = 'Arima200 Residuals Summary')
@@ -212,13 +204,13 @@ point_estimates <- accuracy(simple_fc, energy_feb_2015) %>%
   arrange(RMSE) %>% 
   select(.model, ME, RMSE, MAE, MPE, MAPE)
 
-gt(point_estimates) %>% 
-  tab_header(title = "Short Term Forecast Accuracy Measures") %>% 
-  fmt_number(decimals = 2) %>% 
-  fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
-  tab_style(style = list(
-    cell_text(weight = "bold")
-    ), locations = cells_title()) 
+short_term_table <- gt(point_estimates) %>% 
+    tab_header(title = "Short Term Forecast Accuracy Measures") %>% 
+    fmt_number(decimals = 2) %>% 
+    fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
+    tab_style(style = list(
+      cell_text(weight = "bold")
+      ), locations = cells_title()) 
 
 # Develop forecast for longer time frame
 
@@ -241,9 +233,6 @@ energy_last_year <- energy %>%
   select(time, hour, weekday, weekend, month, `total load actual`, mean_temp, temp_poly, moving_avg, moving_avg_poly)
 
 energy_last_year <- as_tsibble(energy_last_year)
-  
-energy_first_three_years %>% 
-  gg_tsdisplay(difference(`total load actual`, lag = 24, differences = 1), plot_type = 'partial')
 
 # Model some simple forecasting methods and regression model
 demand_fit_long_term <- energy_first_three_years %>%
@@ -255,6 +244,7 @@ demand_fit_long_term <- energy_first_three_years %>%
     etsa = ETS(`total load actual` ~ error("A") + trend("N") + season("A")),
     etsm = ETS(`total load actual` ~ error("M") + trend("N") + season("M")),
     arima200 = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0)),
+    #arima_weekly = ARIMA(`total load actual` ~ pdq(2, 0, 0) + PDQ(2, 1, 0) + (fourier(period = "week", K = 5))),
     regression = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
                         poly(mean_temp,3):month + poly(mean_temp,3):hour),
     regression_recency = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
@@ -273,16 +263,28 @@ point_estimates <- accuracy(simple_fc_long_term, energy_last_year) %>%
   arrange(RMSE) %>% 
   select(.model, ME, RMSE, MAE, MPE, MAPE)
 
-gt(point_estimates) %>% 
-  tab_header(title = "Long Term Forecast Accuracy Measures") %>% 
-  fmt_number(decimals = 2) %>% 
-  fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
-  tab_style(style = list(
-    cell_text(weight = "bold")
-  ), locations = cells_title())
+long_term_measures_table <- gt(point_estimates) %>% 
+    tab_header(title = "Long Term Forecast Accuracy Measures") %>% 
+    fmt_number(decimals = 2) %>% 
+    fmt_percent(columns = c("MPE", "MAPE"), scale_values = FALSE) %>% 
+    tab_style(style = list(
+      cell_text(weight = "bold")
+    ), locations = cells_title())
 
 # Check residual diagnostics for the harmonic regression models
-demand_fit_long_term %>% 
-  select(regression_recency) %>% 
+energy_last_year %>% 
+  model(
+    regression = TSLM(`total load actual` ~ trend() + month + weekday + hour + weekday:hour + poly(mean_temp, 3) +
+                      poly(mean_temp,3):month + poly(mean_temp,3):hour)
+    ) %>% 
   gg_tsresiduals() +
   labs(title = "Regression Model Residuals Summary")
+
+temp_energy_scatter <- energy %>% 
+    ggplot(aes(x = mean_temp, y = `total load actual`)) +
+    geom_point() +
+    labs(y = "Total Load Actual (GWh)", x = "Temerature (Kelvin)", title = "Nonlinear Relationship Between Temperature and Demand") +
+    theme_bw() +
+    theme(axis.title = element_text(size = 15, face = "bold")) +
+    theme(text = element_text(size = 14)) +
+    theme(title = element_text(size = 15, face = "bold"))
