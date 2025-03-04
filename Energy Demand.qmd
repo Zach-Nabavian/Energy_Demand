@@ -139,13 +139,13 @@ long_term_measures_table
 
 # The Regression Model
 
--   $$
-    \begin{align}
-    f(T_t) &= B_6Tt + B_7T_t^2 + B_8T_t^3 \\ 
-    &\quad + B_9T_tM_t + B_{10}T_t^2M_t + B_{11}T_t^3M_t \\ 
-    &\quad + B_{12}T_tH_t + B_{13}T_t^2H_t + B_{14}T_t^3H_t
-    \end{align}
-    $$
+$$
+\begin{align}
+f(T_t) &= B_6Tt + B_7T_t^2 + B_8T_t^3 \\ 
+&\quad + B_9T_tM_t + B_{10}T_t^2M_t + B_{11}T_t^3M_t \\ 
+&\quad + B_{12}T_tH_t + B_{13}T_t^2H_t + B_{14}T_t^3H_t
+\end{align}
+$$
 
 # Why Use a Cubic Regression?
 
