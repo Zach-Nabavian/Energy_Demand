@@ -8,8 +8,6 @@ editor: visual
 execute: 
   allow: true
 bibliography: references.bib
-rsconnect::writeManifest()
-pip freeze > requirements.txt
 ---
 
 ```{r}
@@ -78,7 +76,7 @@ month_box_plot
 
 -   My options included:
 
-    -   Just build a model with hourly seasonality, since that's the strongest
+    -   Just build a model with hourly seasonality, since that has the strongest effect
 
     -   Try to incorporate all three by adding fourier terms
 
@@ -118,31 +116,22 @@ short_term_table
 
 -   I did eventually find a more accurate forecast
 
-# Long Term Forecast Accuracy
-
-```{r}
-long_term_measures_table
-```
-
 # Finding Academic Literature on This Subject
 
--   I wanted to see how other approached forecasting energy demand
+-   I found [this academic journal article](https://www.sciencedirect.com/science/article/abs/pii/S0169207015001557) discussing forecasting for electricity demand
 
--   I found [this academic journal article](https://www.sciencedirect.com/science/article/abs/pii/S0169207015001557)[^1]
+-   The journal uses a model that incorporates a cubic regression model incorporating temperature values
 
--   The forecast model suggested uses a cubic regression model incorporating temperature values
+-   It does not incorporated prior values of energy demand
 
--   It does not incorporated prior values of energy demand, unlike my other forecasts
-
--   The regression also includes terms for hour, weekday, and month, solving the issue of multiple seasonalities
-
-[^1]: [@wang2016]
+    [@wang2016]
 
 # The Regression Model
 
 $$
 \begin{align}
-f(T_t) &= B_6Tt + B_7T_t^2 + B_8T_t^3 \\ 
+f(T_t) &= B_0 + B_1Trend + B_2M_t + B_3W_t + B_4H_t + B_5M_tH_t \\
+&\quad + B_6Tt + B_7T_t^2 + B_8T_t^3 \\ 
 &\quad + B_9T_tM_t + B_{10}T_t^2M_t + B_{11}T_t^3M_t \\ 
 &\quad + B_{12}T_tH_t + B_{13}T_t^2H_t + B_{14}T_t^3H_t
 \end{align}
@@ -154,7 +143,7 @@ $$
 temp_energy_scatter
 ```
 
-# Comparing Performance
+# Long Term Forecast Accuracy
 
 ```{r}
 long_term_measures_table
@@ -166,14 +155,22 @@ long_term_measures_table
 
 -   Therefore, I believe this model in practice would need to be combined with a weather forecast model
 
--   Including recency terms don't seem to improve the model
+-   Including recency terms did not seem to improve the model
+
+# Notes
 
 -   This model is not meant to be some revolutionary new forecast that's better than what the industry is already doing
+
+-   There are definitely better forecasts for this dataset
+
+-   This was meant as a learning exercise above all else
 
 # Lessons Learned
 
 -   Understanding what experts in the field are doing is more important than using the most cutting edge technology
 
--   I used the book [*Forecasting: Principles and Practice*](https://otexts.com/fpp3/bibliography.html)to help learn how to build these models in R
+-   I used the book [Forecasting: Principles and Practice](https://otexts.com/fpp3/) to help learn how to build these models in R
 
--   Posting on LinkedIn helped me understand what people are interested in seeing in these kinds of presentations
+    [@hyndman2017]
+
+# Works Cited

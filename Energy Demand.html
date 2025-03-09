@@ -28,7 +28,27 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
-  </style>
+    /* CSS for citations */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+      margin-bottom: 0em;
+    }
+    .hanging-indent div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }  </style>
   <link rel="stylesheet" href="Energy Demand_files/libs/revealjs/dist/theme/quarto.css">
   <link href="Energy Demand_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="Energy Demand_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
@@ -355,51 +375,1214 @@
 </ul>
 </section>
 
-<section>
 <section id="understanding-seasonality-of-the-data" class="title-slide slide level1 center">
 <h1>Understanding Seasonality of the Data</h1>
 <ul>
-<li><p>Energy demand is unique in that it has <em>multiple kinds of seasonality</em></p></li>
-<li><p>Demand varies by the following:</p>
+<li>Energy demand is unique in that it has <em>multiple kinds of seasonality</em></li>
+</ul>
+<p>Demand varies by the following:</p>
 <ul>
 <li><p>By hour of the day</p></li>
 <li><p>by the day of the week</p></li>
 <li><p>and by the month of the year</p></li>
 </ul>
-<h2 id="hourly-seasonality">Hourly Seasonality</h2></li>
-</ul>
+</section>
+
+<section id="hourly-seasonality" class="title-slide slide level1 center">
+<h1>Hourly Seasonality</h1>
 
 <img data-src="Energy-Demand_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
-<section id="weekly-seasonality" class="slide level2">
-<h2>Weekly Seasonality</h2>
+
+<section id="weekly-seasonality" class="title-slide slide level1 center">
+<h1>Weekly Seasonality</h1>
 
 <img data-src="Energy-Demand_files/figure-revealjs/unnamed-chunk-3-1.png" width="960" class="r-stretch"></section>
-<section id="monthly-seasonality" class="slide level2">
-<h2>Monthly Seasonality</h2>
 
-<img data-src="Energy-Demand_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section></section>
+<section id="monthly-seasonality" class="title-slide slide level1 center">
+<h1>Monthly Seasonality</h1>
+
+<img data-src="Energy-Demand_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
+
 <section id="the-challenge" class="title-slide slide level1 center">
 <h1>The Challenge</h1>
 <ul>
 <li><p>My initial forecasting models could only handle one kind of seasonality at a time</p></li>
 <li><p>My options included:</p>
 <ul>
-<li><p>Just build a model with hourly seasonality, since that’s the strongest</p></li>
+<li><p>Just build a model with hourly seasonality, since that has the strongest effect</p></li>
 <li><p>Try to incorporate all three by adding fourier terms</p></li>
+<li><p>I did eventually find a better solution</p></li>
 </ul></li>
-<li><p>I initially just focused on just over a month so I could experiment with simpler models just accounting for multiple seasonality</p></li>
 </ul>
+</section>
+
+<section id="short-term-forecast" class="title-slide slide level1 center">
+<h1>Short Term Forecast</h1>
+<ul>
+<li><p>I initially worked on short term forecasts to avoid the problem of multiple seasonalities</p></li>
+<li><p>The goal of these forecasts was to forecast demand for February 2015 using the data from January 2015</p></li>
+<li><p>The simple ARIMA model did best</p></li>
+</ul>
+</section>
+
+<section id="short-term-forecast-accuracy" class="title-slide slide level1 center">
+<h1>Short Term Forecast Accuracy</h1>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<div id="gcvkeyapso" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#gcvkeyapso table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#gcvkeyapso thead, #gcvkeyapso tbody, #gcvkeyapso tfoot, #gcvkeyapso tr, #gcvkeyapso td, #gcvkeyapso th {
+  border-style: none;
+}
+
+#gcvkeyapso p {
+  margin: 0;
+  padding: 0;
+}
+
+#gcvkeyapso .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#gcvkeyapso .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#gcvkeyapso .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#gcvkeyapso .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#gcvkeyapso .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#gcvkeyapso .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#gcvkeyapso .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#gcvkeyapso .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#gcvkeyapso .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#gcvkeyapso .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#gcvkeyapso .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#gcvkeyapso .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#gcvkeyapso .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#gcvkeyapso .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#gcvkeyapso .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gcvkeyapso .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#gcvkeyapso .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#gcvkeyapso .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#gcvkeyapso .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gcvkeyapso .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#gcvkeyapso .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gcvkeyapso .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#gcvkeyapso .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gcvkeyapso .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#gcvkeyapso .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#gcvkeyapso .gt_left {
+  text-align: left;
+}
+
+#gcvkeyapso .gt_center {
+  text-align: center;
+}
+
+#gcvkeyapso .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#gcvkeyapso .gt_font_normal {
+  font-weight: normal;
+}
+
+#gcvkeyapso .gt_font_bold {
+  font-weight: bold;
+}
+
+#gcvkeyapso .gt_font_italic {
+  font-style: italic;
+}
+
+#gcvkeyapso .gt_super {
+  font-size: 65%;
+}
+
+#gcvkeyapso .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#gcvkeyapso .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#gcvkeyapso .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#gcvkeyapso .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#gcvkeyapso .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#gcvkeyapso .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#gcvkeyapso .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#gcvkeyapso .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#gcvkeyapso div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_heading">
+<th colspan="6" class="gt_heading gt_title gt_font_normal gt_bottom_border" style="font-weight: bold">Short Term Forecast Accuracy Measures</th>
+</tr>
+<tr class="odd gt_col_headings">
+<th id="a.model" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">.model</th>
+<th id="ME" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">ME</th>
+<th id="RMSE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">RMSE</th>
+<th id="MAE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MAE</th>
+<th id="MPE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MPE</th>
+<th id="MAPE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MAPE</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">arima200</td>
+<td class="gt_row gt_right" headers="ME">−107.64</td>
+<td class="gt_row gt_right" headers="RMSE">3,374.58</td>
+<td class="gt_row gt_right" headers="MAE">2,648.58</td>
+<td class="gt_row gt_right" headers="MPE">−1.28%</td>
+<td class="gt_row gt_right" headers="MAPE">9.54%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">etsm</td>
+<td class="gt_row gt_right" headers="ME">733.03</td>
+<td class="gt_row gt_right" headers="RMSE">3,428.85</td>
+<td class="gt_row gt_right" headers="MAE">2,762.02</td>
+<td class="gt_row gt_right" headers="MPE">1.43%</td>
+<td class="gt_row gt_right" headers="MAPE">9.68%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">snaive_hour</td>
+<td class="gt_row gt_right" headers="ME">−114.45</td>
+<td class="gt_row gt_right" headers="RMSE">3,509.98</td>
+<td class="gt_row gt_right" headers="MAE">2,770.05</td>
+<td class="gt_row gt_right" headers="MPE">−1.99%</td>
+<td class="gt_row gt_right" headers="MAPE">10.01%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">etsa</td>
+<td class="gt_row gt_right" headers="ME">1,761.85</td>
+<td class="gt_row gt_right" headers="RMSE">3,721.93</td>
+<td class="gt_row gt_right" headers="MAE">3,105.99</td>
+<td class="gt_row gt_right" headers="MPE">5.17%</td>
+<td class="gt_row gt_right" headers="MAPE">10.67%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">mean</td>
+<td class="gt_row gt_right" headers="ME">−1,403.54</td>
+<td class="gt_row gt_right" headers="RMSE">5,031.87</td>
+<td class="gt_row gt_right" headers="MAE">4,270.70</td>
+<td class="gt_row gt_right" headers="MPE">−8.09%</td>
+<td class="gt_row gt_right" headers="MAPE">16.39%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">snaive_weekday</td>
+<td class="gt_row gt_right" headers="ME">−2,113.50</td>
+<td class="gt_row gt_right" headers="RMSE">6,025.49</td>
+<td class="gt_row gt_right" headers="MAE">4,875.65</td>
+<td class="gt_row gt_right" headers="MPE">−10.65%</td>
+<td class="gt_row gt_right" headers="MAPE">18.83%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="issues-with-more-complex-models" class="title-slide slide level1 center">
+<h1>Issues With More Complex Models</h1>
+<ul>
+<li><p>These models are harder to explain</p></li>
+<li><p>They take much longer to run</p></li>
+<li><p>I tried to include fourier terms to account for multiple seasonalities, but this model takes much longer to run</p></li>
+<li><p>At one point, I tried to use a machine learning model, but I ultimately wanted to use models that didn’t take so long to run</p></li>
+</ul>
+</section>
+
+<section id="extending-to-longer-term" class="title-slide slide level1 center">
+<h1>Extending to Longer Term</h1>
+<ul>
+<li><p>My next goal was to forecast the whole year 2018 using the data from 2015 to 2017</p></li>
+<li><p>My initial forecast models used for the short term forecast were all less accurate</p></li>
+<li><p>These models were all surprisingly biased in the same direction</p></li>
+<li><p>I did eventually find a more accurate forecast</p></li>
+</ul>
+</section>
+
+<section id="finding-academic-literature-on-this-subject" class="title-slide slide level1 center">
+<h1>Finding Academic Literature on This Subject</h1>
+<ul>
+<li><p>I found <a href="https://www.sciencedirect.com/science/article/abs/pii/S0169207015001557">this academic journal article</a> discussing forecasting for electricity demand</p></li>
+<li><p>The journal uses a model that incorporates a cubic regression model incorporating temperature values</p></li>
+<li><p>It does not incorporated prior values of energy demand</p>
+<p><span class="citation" data-cites="wang2016">(<a href="#/works-cited" role="doc-biblioref" onclick="">Wang, Liu, and Hong 2016</a>)</span></p></li>
+</ul>
+</section>
+
+<section id="the-regression-model" class="title-slide slide level1 center">
+<h1>The Regression Model</h1>
 <p><span class="math display">\[
 \begin{align}
-f(T_t) &amp;= B_6Tt + B_7T_t^2 + B_8T_t^3 \\
+f(T_t) &amp;= B_0 + B_1Trend + B_2M_t + B_3W_t + B_4H_t + B_5M_tH_t \\
+&amp;\quad + B_6Tt + B_7T_t^2 + B_8T_t^3 \\
 &amp;\quad + B_9T_tM_t + B_{10}T_t^2M_t + B_{11}T_t^3M_t \\
 &amp;\quad + B_{12}T_tH_t + B_{13}T_t^2H_t + B_{14}T_t^3H_t
 \end{align}
 \]</span></p>
+</section>
+
+<section id="why-use-a-cubic-regression" class="title-slide slide level1 center">
+<h1>Why Use a Cubic Regression?</h1>
+
+<img data-src="Energy-Demand_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+
+<section id="long-term-forecast-accuracy" class="title-slide slide level1 center">
+<h1>Long Term Forecast Accuracy</h1>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<div id="mypfupxiid" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#mypfupxiid table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#mypfupxiid thead, #mypfupxiid tbody, #mypfupxiid tfoot, #mypfupxiid tr, #mypfupxiid td, #mypfupxiid th {
+  border-style: none;
+}
+
+#mypfupxiid p {
+  margin: 0;
+  padding: 0;
+}
+
+#mypfupxiid .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#mypfupxiid .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#mypfupxiid .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#mypfupxiid .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#mypfupxiid .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#mypfupxiid .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#mypfupxiid .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#mypfupxiid .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#mypfupxiid .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#mypfupxiid .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#mypfupxiid .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#mypfupxiid .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#mypfupxiid .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#mypfupxiid .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#mypfupxiid .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mypfupxiid .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#mypfupxiid .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#mypfupxiid .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#mypfupxiid .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mypfupxiid .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#mypfupxiid .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mypfupxiid .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#mypfupxiid .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mypfupxiid .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#mypfupxiid .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#mypfupxiid .gt_left {
+  text-align: left;
+}
+
+#mypfupxiid .gt_center {
+  text-align: center;
+}
+
+#mypfupxiid .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#mypfupxiid .gt_font_normal {
+  font-weight: normal;
+}
+
+#mypfupxiid .gt_font_bold {
+  font-weight: bold;
+}
+
+#mypfupxiid .gt_font_italic {
+  font-style: italic;
+}
+
+#mypfupxiid .gt_super {
+  font-size: 65%;
+}
+
+#mypfupxiid .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#mypfupxiid .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#mypfupxiid .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#mypfupxiid .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#mypfupxiid .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#mypfupxiid .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#mypfupxiid .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#mypfupxiid .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#mypfupxiid div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="header gt_heading">
+<th colspan="6" class="gt_heading gt_title gt_font_normal gt_bottom_border" style="font-weight: bold">Long Term Forecast Accuracy Measures</th>
+</tr>
+<tr class="odd gt_col_headings">
+<th id="a.model" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">.model</th>
+<th id="ME" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">ME</th>
+<th id="RMSE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">RMSE</th>
+<th id="MAE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MAE</th>
+<th id="MPE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MPE</th>
+<th id="MAPE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">MAPE</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">regression</td>
+<td class="gt_row gt_right" headers="ME">482.18</td>
+<td class="gt_row gt_right" headers="RMSE">2,847.08</td>
+<td class="gt_row gt_right" headers="MAE">2,067.43</td>
+<td class="gt_row gt_right" headers="MPE">0.86%</td>
+<td class="gt_row gt_right" headers="MAPE">7.12%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">regression_recency</td>
+<td class="gt_row gt_right" headers="ME">335.81</td>
+<td class="gt_row gt_right" headers="RMSE">2,863.07</td>
+<td class="gt_row gt_right" headers="MAE">2,059.43</td>
+<td class="gt_row gt_right" headers="MPE">0.30%</td>
+<td class="gt_row gt_right" headers="MAPE">7.12%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">etsm</td>
+<td class="gt_row gt_right" headers="ME">2,847.15</td>
+<td class="gt_row gt_right" headers="RMSE">4,427.32</td>
+<td class="gt_row gt_right" headers="MAE">3,702.42</td>
+<td class="gt_row gt_right" headers="MPE">9.15%</td>
+<td class="gt_row gt_right" headers="MAPE">12.50%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">mean</td>
+<td class="gt_row gt_right" headers="ME">483.94</td>
+<td class="gt_row gt_right" headers="RMSE">4,652.16</td>
+<td class="gt_row gt_right" headers="MAE">3,975.77</td>
+<td class="gt_row gt_right" headers="MPE">−0.95%</td>
+<td class="gt_row gt_right" headers="MAPE">14.00%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">etsa</td>
+<td class="gt_row gt_right" headers="ME">4,100.39</td>
+<td class="gt_row gt_right" headers="RMSE">5,269.14</td>
+<td class="gt_row gt_right" headers="MAE">4,501.56</td>
+<td class="gt_row gt_right" headers="MPE">13.46%</td>
+<td class="gt_row gt_right" headers="MAPE">15.10%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">arima200</td>
+<td class="gt_row gt_right" headers="ME">4,326.32</td>
+<td class="gt_row gt_right" headers="RMSE">5,537.71</td>
+<td class="gt_row gt_right" headers="MAE">4,591.06</td>
+<td class="gt_row gt_right" headers="MPE">13.93%</td>
+<td class="gt_row gt_right" headers="MAPE">15.01%</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers=".model">snaive_weekday</td>
+<td class="gt_row gt_right" headers="ME">2,683.19</td>
+<td class="gt_row gt_right" headers="RMSE">5,841.11</td>
+<td class="gt_row gt_right" headers="MAE">4,765.96</td>
+<td class="gt_row gt_right" headers="MPE">6.82%</td>
+<td class="gt_row gt_right" headers="MAPE">15.83%</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers=".model">snaive_hour</td>
+<td class="gt_row gt_right" headers="ME">4,921.16</td>
+<td class="gt_row gt_right" headers="RMSE">6,117.61</td>
+<td class="gt_row gt_right" headers="MAE">5,093.38</td>
+<td class="gt_row gt_right" headers="MPE">15.85%</td>
+<td class="gt_row gt_right" headers="MAPE">16.56%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="issues-with-the-regression-model" class="title-slide slide level1 center">
+<h1>Issues With The Regression Model</h1>
+<ul>
+<li><p>If we want to put this model into practice, we won’t be able to use real-time temperature data if we want to forecast future demand</p></li>
+<li><p>Therefore, I believe this model in practice would need to be combined with a weather forecast model</p></li>
+<li><p>Including recency terms did not seem to improve the model</p></li>
+</ul>
+</section>
+
+<section id="notes" class="title-slide slide level1 center">
+<h1>Notes</h1>
+<ul>
+<li><p>This model is not meant to be some revolutionary new forecast that’s better than what the industry is already doing</p></li>
+<li><p>There are definitely better forecasts for this dataset</p></li>
+<li><p>This was meant as a learning exercise above all else</p></li>
+</ul>
+</section>
+
+<section id="lessons-learned" class="title-slide slide level1 center">
+<h1>Lessons Learned</h1>
+<ul>
+<li><p>Understanding what experts in the field are doing is more important than using the most cutting edge technology</p></li>
+<li><p>I used the book <a href="https://otexts.com/fpp3/">Forecasting: Principles and Practice</a> to help learn how to build these models in R</p>
+<p><span class="citation" data-cites="hyndman2017">(<a href="#/works-cited" role="doc-biblioref" onclick="">Hyndman 2017</a>)</span></p></li>
+</ul>
+</section>
+
+<section id="works-cited" class="title-slide slide level1 smaller scrollable">
+<h1>Works Cited</h1>
 
 <div class="quarto-auto-generated-content">
 <div class="footer footer-default">
 
+</div>
+</div>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-hyndman2017" class="csl-entry" role="listitem">
+Hyndman, Rob. 2017. <span>“Fpp2: Data for <span>"</span>Forecasting: Principles and Practice<span>"</span> (2nd Edition).”</span> The R Foundation. <a href="https://doi.org/10.32614/cran.package.fpp2">https://doi.org/10.32614/cran.package.fpp2</a>.
+</div>
+<div id="ref-wang2016" class="csl-entry" role="listitem">
+Wang, Pu, Bidong Liu, and Tao Hong. 2016. <span>“Electric Load Forecasting with Recency Effect: A Big Data Approach.”</span> <em>International Journal of Forecasting</em> 32 (3): 585–97. <a href="https://doi.org/10.1016/j.ijforecast.2015.09.006">https://doi.org/10.1016/j.ijforecast.2015.09.006</a>.
 </div>
 </div>
 </section>
